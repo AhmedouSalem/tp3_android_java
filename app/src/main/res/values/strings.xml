@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">tp3_android_persistence</string>
+    <string name="tvSignUp"><u>Inscription.</u></string>
+    <string name="tvLogin"><u>Se connecter.</u></string>
+</resources>
