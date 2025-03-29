@@ -7,18 +7,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.widget.ViewPager2;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 import fr.umontpellier.tp3_android_persistence.Intefaces.OnDataPassListener;
 import fr.umontpellier.tp3_android_persistence.adapters.ViewPagerAdapter;
-import fr.umontpellier.tp3_android_persistence.dao.UserDAO;
 import fr.umontpellier.tp3_android_persistence.fragments.FragmentInfo;
 import fr.umontpellier.tp3_android_persistence.fragments.FragmentLogin;
 import fr.umontpellier.tp3_android_persistence.fragments.FragmentSummary;
 import fr.umontpellier.tp3_android_persistence.models.User;
 import fr.umontpellier.tp3_android_persistence.utils.SwipeControlTouchListener;
+import fr.umontpellier.tp3_android_persistence.viewmodels.UserViewModel;
 
 public class SignUpActivity extends AppCompatActivity implements OnDataPassListener {
 
@@ -30,6 +31,7 @@ public class SignUpActivity extends AppCompatActivity implements OnDataPassListe
     private ViewPagerAdapter adapter;
     private boolean isUserSaved = false;
     private TextView tvLogin;
+    private UserViewModel userViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +70,10 @@ public class SignUpActivity extends AppCompatActivity implements OnDataPassListe
         tvLogin.setOnClickListener(v -> {
             startActivity(new Intent(this, LoginActivity.class));
         });
+
+
+
+        userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
     }
 
     @Override
@@ -99,38 +105,70 @@ public class SignUpActivity extends AppCompatActivity implements OnDataPassListe
         if (currentItem == 0) {
             FragmentLogin fragment = (FragmentLogin) getSupportFragmentManager().findFragmentByTag("f0");
             if (fragment != null && fragment.validateForm()) {
-                viewPager.setCurrentItem(currentItem + 1);
-                updateProgress(50);
+                userBundle.putSerializable("user", user);
+                Log.d("SignUpActivity", "Données mises à jour après FragmentLogin : " + user.toString());
+
+                userViewModel.loginExists(user.getLogin(), exists -> {
+                    runOnUiThread(() -> {
+                        if (exists) {
+                            fragment.getEtLogin().setError("Login déjà utilisé !");
+                            Toast.makeText(this, "Login déjà utilisé !", Toast.LENGTH_SHORT).show();
+                        } else {
+                            viewPager.setCurrentItem(currentItem + 1);
+                            updateProgress(50);
+                        }
+                    });
+                });
+
             }
+
         } else if (currentItem == 1) {
             FragmentInfo fragment = (FragmentInfo) getSupportFragmentManager().findFragmentByTag("f1");
             if (fragment != null && fragment.validateForm()) {
+
                 userBundle.putSerializable("user", user);
-                Log.d("MainActivity", "Données envoyées à FragmentSummary : " + user.toString());
+                Log.d("SignUpActivity", "Données envoyées à FragmentSummary : " + user.toString());
 
-                UserDAO userDAO = new UserDAO(this);
+                userViewModel.emailExists(user.getEmail(), emailExists -> {
+                    if (emailExists) {
+                        runOnUiThread(() -> {
+                            fragment.getEtEmail().setError("Email déjà utilisé !");
+                            Toast.makeText(this, "Email déjà utilisé !", Toast.LENGTH_SHORT).show();
+                        });
 
-                    boolean inserted = userDAO.insertUser(user);
-                    if (inserted) {
-                        isUserSaved = true;
-                        Toast.makeText(this, "Inscription réussie !", Toast.LENGTH_LONG).show();
                     } else {
-                        Toast.makeText(this, "Erreur lors de l'enregistrement !", Toast.LENGTH_SHORT).show();
+                        userViewModel.phoneExists(user.getNumTel(), phoneExists -> {
+                            if (phoneExists) {
+                                runOnUiThread(() -> {
+                                    fragment.getEtNumTel().setError("Numéro de téléphone déjà utilisé !");
+                                    Toast.makeText(this, "Numéro de téléphone déjà utilisé !", Toast.LENGTH_SHORT).show();
+                                });
+                            } else {
+                                userViewModel.insertUser(user, inserted -> runOnUiThread(() -> {
+                                    if (inserted) {
+                                        isUserSaved = true;
+                                        Toast.makeText(this, "Inscription réussie !", Toast.LENGTH_LONG).show();
+
+                                        FragmentSummary fragmentSummary = (FragmentSummary) getSupportFragmentManager().findFragmentByTag("f2");
+                                        if (fragmentSummary != null) {
+                                            fragmentSummary.setArguments(userBundle);
+                                            fragmentSummary.updateUI();
+                                        }
+
+                                        viewPager.setCurrentItem(currentItem + 1);
+                                        btnNext.setText("Terminer");
+                                        updateProgress(100);
+                                    } else {
+                                        Toast.makeText(this, "Erreur lors de l'enregistrement !", Toast.LENGTH_SHORT).show();
+                                    }
+                                }));
+                            }
+                        });
                     }
-
-                // Récupérer le fragment summary
-                FragmentSummary fragmentSummary = (FragmentSummary) getSupportFragmentManager().findFragmentByTag("f2");
-
-                if (fragmentSummary != null) {
-                    fragmentSummary.setArguments(userBundle);
-                    fragmentSummary.updateUI();
-                }
-
-                viewPager.setCurrentItem(currentItem + 1);
-                btnNext.setText("Terminer");
-                updateProgress(100);
+                });
             }
-        } else if (currentItem == 2 && isUserSaved) {
+        }
+        else if (currentItem == 2 && isUserSaved) {
             startActivity(new Intent(this, LoginActivity.class));
         }
 

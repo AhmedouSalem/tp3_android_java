@@ -1,42 +1,40 @@
 package fr.umontpellier.tp3_android_persistence;
 
-import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.icu.util.Calendar;
 import android.os.Bundle;
 import android.widget.Toast;
-
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
-
-import fr.umontpellier.tp3_android_persistence.dao.PlanningDAO;
 import fr.umontpellier.tp3_android_persistence.models.Planning;
 import fr.umontpellier.tp3_android_persistence.utils.SessionManager;
+import fr.umontpellier.tp3_android_persistence.viewmodels.PlanningViewModel;
 
 public class PlanningActivity extends AppCompatActivity {
 
     private TextInputEditText etSlot1, etSlot2, etSlot3, etSlot4, etPlanningDate;
     private MaterialButton btnSavePlanning;
     private String currentLogin;
+    private PlanningViewModel planningViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_planning);
 
-        // Récupérer le login utilisateur
-        String currentLogin = SessionManager.getLogin(this);
+        currentLogin = SessionManager.getLogin(this);
 
         if (currentLogin == null) {
             Toast.makeText(this, "Erreur : utilisateur non connecté", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
+
+        planningViewModel = new ViewModelProvider(this).get(PlanningViewModel.class);
 
         etSlot1 = findViewById(R.id.etSlot1);
         etSlot2 = findViewById(R.id.etSlot2);
@@ -50,47 +48,41 @@ public class PlanningActivity extends AppCompatActivity {
             String s2 = etSlot2.getText().toString().trim();
             String s3 = etSlot3.getText().toString().trim();
             String s4 = etSlot4.getText().toString().trim();
+            String date = etPlanningDate.getText().toString().trim();
 
             if (s1.isEmpty() && s2.isEmpty() && s3.isEmpty() && s4.isEmpty()) {
                 Toast.makeText(this, "Veuillez remplir au moins un créneau", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            String date = etPlanningDate.getText().toString().trim();
-
             if (date.isEmpty()) {
                 Toast.makeText(this, "Veuillez sélectionner une date", Toast.LENGTH_SHORT).show();
                 return;
             }
 
+            Planning planning = new Planning(currentLogin, s1, s2, s3, s4, date);
 
-            Planning planning = new Planning(currentLogin, s1, s2, s3, s4);
-            planning.setDate(date);
-            PlanningDAO dao = new PlanningDAO(this);
-            boolean exists = dao.planningExists(currentLogin, date);
-
-            long result;
-            if (exists) {
-                int rows = dao.updatePlanning(planning);
-                if (rows > 0) {
-                    Toast.makeText(this, "Planning mis à jour !", Toast.LENGTH_SHORT).show();
+            planningViewModel.planningExists(currentLogin, date, exists -> {
+                if (exists) {
+                    planningViewModel.updatePlanning(planning, success -> runOnUiThread(() -> {
+                        if (success) {
+                            Toast.makeText(this, "Planning mis à jour !", Toast.LENGTH_SHORT).show();
+                            goToSummary();
+                        } else {
+                            Toast.makeText(this, "Erreur de mise à jour", Toast.LENGTH_SHORT).show();
+                        }
+                    }));
                 } else {
-                    Toast.makeText(this, "Échec de la mise à jour.", Toast.LENGTH_SHORT).show();
-                    return;
+                    planningViewModel.insertPlanning(planning, success -> runOnUiThread(() -> {
+                        if (success) {
+                            Toast.makeText(this, "Planning enregistré", Toast.LENGTH_SHORT).show();
+                            goToSummary();
+                        } else {
+                            Toast.makeText(this, "Erreur lors de la sauvegarde", Toast.LENGTH_SHORT).show();
+                        }
+                    }));
                 }
-            } else {
-                result = dao.insertPlanning(planning);
-
-                if (result != -1) {
-                    Toast.makeText(this, "Planning enregistré", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(this, PlanningSummaryActivity.class);
-                    intent.putExtra("login", currentLogin);
-                    startActivity(intent);
-                    finish();
-                } else {
-                    Toast.makeText(this, "Erreur lors de la sauvegarde", Toast.LENGTH_SHORT).show();
-                }
-            }
+            });
         });
 
         etPlanningDate.setOnClickListener(v -> {
@@ -104,8 +96,13 @@ public class PlanningActivity extends AppCompatActivity {
                         String date = String.format("%02d/%02d/%04d", d, m + 1, y);
                         etPlanningDate.setText(date);
                     }, year, month, day);
-
             datePickerDialog.show();
         });
+    }
+
+    private void goToSummary() {
+        Intent intent = new Intent(this, PlanningSummaryActivity.class);
+        startActivity(intent);
+        finish();
     }
 }

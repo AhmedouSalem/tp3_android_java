@@ -1,23 +1,44 @@
 package fr.umontpellier.tp3_android_persistence.models;
 
-public class Planning {
-    private long id;
-    private String loginUser;
-    private String slot1;
-    private String slot2;
-    private String slot3;
-    private String slot4;
-    private String date;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+import androidx.room.ColumnInfo;
 
+import java.io.Serializable;
+
+@Entity(tableName = "planning")
+public class Planning implements Serializable {
+
+    @PrimaryKey(autoGenerate = true)
+    private long id;
+
+    @ColumnInfo(name = "login")
+    private String loginUser;
+
+    @ColumnInfo(name = "slot1")
+    private String slot1;
+
+    @ColumnInfo(name = "slot2")
+    private String slot2;
+
+    @ColumnInfo(name = "slot3")
+    private String slot3;
+
+    @ColumnInfo(name = "slot4")
+    private String slot4;
+
+    @ColumnInfo(name = "date")
+    private String date;
 
     public Planning() {}
 
-    public Planning(String loginUser, String slot1, String slot2, String slot3, String slot4) {
+    public Planning(String loginUser, String slot1, String slot2, String slot3, String slot4, String date) {
         this.loginUser = loginUser;
         this.slot1 = slot1;
         this.slot2 = slot2;
         this.slot3 = slot3;
         this.slot4 = slot4;
+        this.date = date;
     }
 
     public long getId() { return id; }
@@ -40,5 +61,4 @@ public class Planning {
 
     public String getDate() { return date; }
     public void setDate(String date) { this.date = date; }
-
 }

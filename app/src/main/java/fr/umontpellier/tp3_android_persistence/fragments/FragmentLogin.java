@@ -16,7 +16,6 @@ import java.util.Objects;
 
 import fr.umontpellier.tp3_android_persistence.Intefaces.OnDataPassListener;
 import fr.umontpellier.tp3_android_persistence.R;
-import fr.umontpellier.tp3_android_persistence.SignUpActivity;
 import fr.umontpellier.tp3_android_persistence.models.User;
 import fr.umontpellier.tp3_android_persistence.utils.FormValidator;
 
@@ -50,21 +49,27 @@ public class FragmentLogin extends Fragment {
         return view;
     }
 
+
     public boolean validateForm() {
         String login = Objects.requireNonNull(etLogin.getText()).toString().trim();
         String password = Objects.requireNonNull(etPassword.getText()).toString();
+        String confirmPassword = Objects.requireNonNull(etConfirmPassword.getText()).toString();
 
         boolean valid = true;
-        if (!FormValidator.isValidLogin(etLogin)) valid = false;
+
+        if (!FormValidator.isValidLoginFormat(etLogin)) valid = false;
         if (!FormValidator.doPasswordsMatch(etPassword, etConfirmPassword)) valid = false;
 
-
-        user.setLogin(login);
-        user.setPassword(password);
-
-        // Envoyer les données à MainActivity via l'interface
-        dataPassListener.onDataPass(user);
+        if (valid) {
+            user.setLogin(login);
+            user.setPassword(password);
+            dataPassListener.onDataPass(user);
+        }
 
         return valid;
+    }
+
+    public TextInputEditText getEtLogin() {
+        return etLogin;
     }
 }

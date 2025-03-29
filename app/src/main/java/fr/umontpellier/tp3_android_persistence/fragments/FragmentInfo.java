@@ -44,6 +44,7 @@ public class FragmentInfo extends Fragment {
         }
     }
 
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -86,6 +87,14 @@ public class FragmentInfo extends Fragment {
     }
 
 
+    public TextInputEditText getEtNumTel() {
+        return etNumTel;
+    }
+
+    public TextInputEditText getEtEmail() {
+        return etEmail;
+    }
+
     public boolean validateForm() {
         boolean valid = true;
 
@@ -99,8 +108,8 @@ public class FragmentInfo extends Fragment {
         if (!FormValidator.isValidName(etNom, "Le nom")) valid = false;
         if (!FormValidator.isValidName(etPrenom, "Le prénom")) valid = false;
         if (!FormValidator.isValidBirthdate(etDateNaissance)) valid = false;
-        if (!FormValidator.isValidPhone(etNumTel)) valid = false;
-        if (!FormValidator.isValidEmail(etEmail)) valid = false;
+        if (!FormValidator.isValidPhoneFormat(etNumTel)) valid = false;
+        if (!FormValidator.isValidEmailFormat(etEmail)) valid = false;
 
         List<CheckBox> interets = Arrays.asList(cbSport, cbMusique, cbLecture);
 
@@ -127,5 +136,6 @@ public class FragmentInfo extends Fragment {
 
         return valid;
     }
+
 
 }
