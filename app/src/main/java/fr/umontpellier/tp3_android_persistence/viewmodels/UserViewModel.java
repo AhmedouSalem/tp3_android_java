@@ -13,7 +13,6 @@ import fr.umontpellier.tp3_android_persistence.models.User;
 public class UserViewModel extends AndroidViewModel {
 
     private final UserRepository userRepository;
-    private final MutableLiveData<Boolean> loginExistsLiveData = new MutableLiveData<>();
 
     public UserViewModel(@NonNull Application application) {
         super(application);
@@ -24,13 +23,10 @@ public class UserViewModel extends AndroidViewModel {
         userRepository.loginExists(login, callback);
     }
 
-
-    // 🧾 Insère un utilisateur et exécute un callback de confirmation
     public void insertUser(User user, UserRepository.Callback callback) {
         userRepository.insertUser(user, callback);
     }
 
-    // ✏️ (Facultatif) expose d'autres opérations si besoin
     public void emailExists(String email, UserRepository.ExistsCallback callback) {
         userRepository.emailExists(email, callback);
     }

@@ -20,9 +20,6 @@ public interface UserDao {
     @Query("SELECT * FROM user WHERE email = :email AND password = :password LIMIT 1")
     User getUserByEmailAndPassword(String email, String password);
 
-    @Query("SELECT * FROM user WHERE login = :login LIMIT 1")
-    User getUserByLogin(String login);
-
     @Query("SELECT EXISTS(SELECT 1 FROM user WHERE login = :login)")
     boolean loginExists(String login);
 
@@ -31,8 +28,5 @@ public interface UserDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM user WHERE numTel = :numTel)")
     boolean phoneExists(String numTel);
-
-    @Query("SELECT * FROM user")
-    List<User> getAllUsers();
 }
 
