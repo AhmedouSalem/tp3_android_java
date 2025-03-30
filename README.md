@@ -29,7 +29,6 @@ Il s'agit d'une application de gestion d'utilisateurs (inscription/connexion) av
 |-------------------------|-----------|----------|
 | ![](images/fragment_summary.png) | ![](images/LoginScreen.png) | ![](images/planning_summary.png) |
 
-> 📁 Place toutes tes images dans un dossier `images/` à la racine du projet.
 
 ---
 
